@@ -22,7 +22,6 @@ class sinSpider(scrapy.Spider):
         self.path = "D:\\paradise\\stuff\\sinisterBabes\\"
         self.videoPath = "D:\\paradise\\stuff\\sinisterVideos\\"
 
-
     def start_requests(self):
         with open("instaLinks.opml", "r+") as instalink:
             urls = instalink.readlines()
@@ -58,6 +57,7 @@ class sinSpider(scrapy.Spider):
     def getCompletedId(self, profileId):
         self.ensure_dir("Completed\\")
         self.ensureFile("Completed\\" + profileId + ".ccode")
+        print("opening " + profileId + ".ccode for checking")
         with open("Completed\\" + profileId + ".ccode", "r") as completed:
             return completed.read()
 
@@ -107,15 +107,36 @@ class sinSpider(scrapy.Spider):
         links = response.css("body").re("\"display_url\":[ ]*\"(.*?)\"")
         picIds = response.css("body").re("\"shortcode\":[ ]*\"(.*?)\"")
         types = response.css("body").re("\"__typename\":[ ]*\"(.*?)\"")
-
         for i in range(len(links)):
             if picIds[i] not in completedPicIds:
                 imageurl = links[i]
                 imageName = fileNames[i]
-                if types[i] != 'GraphVideo':
-                    self.downloadImg(imageurl, imageName + ".jpg", self.path)
-                else:
+                if types[i] == 'GraphVideo':
                     self.downloadImg(imageurl, imageName + ".jpg", self.videoPath)
+                elif types[i] == 'GraphSidecar':
+                    spiderMeta = {}
+                    spiderMeta["profileName"] = profileId + " Slide"
+                    madeUpUrl = "https://www.instagram.com/p/%s/" % picIds[i]
+                    print("its time to ride a car")
+                    print(madeUpUrl)
+                    yield scrapy.Request(url=madeUpUrl,callback=self.downloadSlideShow,priority=1,meta=spiderMeta)
+                else:
+                    self.downloadImg(imageurl, imageName + ".jpg", self.path)
+                completedPicIds = picIds[i] + "\n" + completedPicIds
+        self.setCompletedId(profileId, completedPicIds)
+
+    def downloadSlideShow(self, response):
+        profileId = response.meta["profileName"]
+
+        completedPicIds = self.getCompletedId(profileId)
+        fileNames = ["%s(%s)" % (profileId, x) for x in response.css("body").re("\"shortcode\":[ ]*\"(.*?)\"")]
+        links = response.css("body").re("\"display_url\":[ ]*\"(.*?)\"")
+        picIds = response.css("body").re("\"shortcode\":[ ]*\"(.*?)\"")
+        for i in range(len(links)):
+            if picIds[i] not in completedPicIds:
+                imageurl = links[i]
+                imageName = fileNames[i]
+                self.downloadImg(imageurl, imageName + ".jpg", self.path)
                 completedPicIds = picIds[i] + "\n" + completedPicIds
 
         self.setCompletedId(profileId, completedPicIds)
