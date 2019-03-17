@@ -104,10 +104,15 @@ class sinSpider(scrapy.Spider):
         profileId = response.url.split("/")[3]
         completedPicIds = self.getCompletedId(profileId)
         fileNames = ["%s(%s)" % (profileId, x) for x in response.css("body").re("\"shortcode\":[ ]*\"(.*?)\"")]
-        links = response.css("body").re("\"display_url\":[ ]*\"(.*?)\"")
+        links = response.css("body").re("\"display_url\":[ ]*\"(.*?)\"")[:12]
         picIds = response.css("body").re("\"shortcode\":[ ]*\"(.*?)\"")
         types = response.css("body").re("\"__typename\":[ ]*\"(.*?)\"")
         for i in range(len(links)):
+            try:
+                a = picIds[i]
+            except Exception as e:
+                print(response.url + str(i))
+                print(i)
             if picIds[i] not in completedPicIds:
                 imageurl = links[i]
                 imageName = fileNames[i]
