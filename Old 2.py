@@ -20,7 +20,6 @@ class sinSpider(scrapy.Spider):
 
     def __init__(self):
         self.path = "D:\\paradise\\stuff\\sinisterBabes"
-        self.videoPath2 = "D:\\paradise\\stuff\\sinisterVideos"
         self.videoPath = "D:\\paradise\\stuff\\sinisterVideos"
 
     def start_requests(self):
@@ -31,21 +30,11 @@ class sinSpider(scrapy.Spider):
         random.shuffle(urls)
         for url in urls:
             rl = url.split("/")[3]
-            # url = "https://profile-stalker.to/profile/%s" % rl
+            url = "https://profile-stalker.to/profile/%s" % rl
             print("currently opening the url =" + url)
-            c = 'ig_did=F3F9A864-AC42-4DB3-AC9F-0B0AF535C5B0; csrftoken=sZ4yJrELqcMOKDTdQ46pe2DA7vVwB5bv; mid=XuueIQALAAHr9T-qkhi7-yFbHJ_A; ds_user_id=3246264185; rur=RVA; sessionid=3246264185%3AXm8BtKO1uiBGJC%3A17; shbid=4720; shbts=1613220423.417121'
-            c = self.getScrapyCookie(c)
-            yield scrapy.Request(url.rstrip("\n"), callback=self.parse,  cookies=c, errback=self.on404, )
-            # yield scrapy.Request(url.rstrip("\n"), callback=self.profileStalker, errback=self.on404, )
-
-    def getScrapyCookie(self,cookie):
-        # cookie = "PHPSESSID=becef4fcc277bc00d354381614a223a1; phpbb3_o
-        cookie = cookie.strip()
-        cookie = cookie.strip(";")
-        t = cookie.split(";")
-        k = {x.split("=")[0].strip():x.split("=")[1].strip() for x in t}
-        # print(k)
-        return k
+            
+            # yield scrapy.Request(url.rstrip("\n"), callback=self.parse,  cookies={"csrftoken":"Hs8MEf1oSXv4t2q8FtcOtqrdxqFtsLW1","ds_user_id":"3246264185","ig_did":"217B2DB9-A084-4B9E-9F04-948BA42645B6","mid":"XmzqZgALAAHUdojAunjvlnGCtfs3","rur":"VLL","sessionid":"3246264185:1Ow06LaBDCbLAi:9","shbid":"4720","shbts":"1584196241.7547708","urlgen":"\"{\\\"103.226.202.5\\\": 133283}:1jD7p4:Dym3Kv6FDjxauuyx0bQCNHrkwsY\""}, errback=self.on404, )
+            yield scrapy.Request(url.rstrip("\n"), callback=self.profileStalker, errback=self.on404, )
 
     def on404(self, failure):
         print(failure.value.response.status)
@@ -67,7 +56,7 @@ class sinSpider(scrapy.Spider):
             j = [x for x in t if id not in x]
             if (len(j) < len(t) - 4):
                 print("this is the culprit " + id)
-            # print(j)
+            print(j)
         with open(filename, "w") as inF:
             inF.writelines(j)
 
@@ -100,7 +89,7 @@ class sinSpider(scrapy.Spider):
         folder = "\\".join(Path.split("\\")[:-1])
         # print("DDDD"+folder)
         # time.sleep(10)
-        folder = re.sub("[^\w\\\ \d-_]","", folder)
+        folder = re.sub("[^\w\\\ \d-]","", folder)
         folder = re.sub("\s+"," ", folder)
         # print("YYYY"+folder)
         print(r"C:\GalImgs\%s" % folder)
@@ -141,33 +130,21 @@ class sinSpider(scrapy.Spider):
 
     def profilePost(self, response):
         print("Post Stalking is starting")
-        # imageurl = response.css("a.download-button::attr(href)").extract()[0]
-        t = response.css("a.download-button::attr(href)").extract()
-        imageurl = [x for x in t if "dl=" in x]
-        try:
-            if len(imageurl) > 0 and ".mp4" in imageurl[0] and False:
-                return
-        except:
-            import pdb; pdb.set_trace()
-        profileId = response.meta['pid']
-        completedPicIds = self.getCompletedId(profileId)
+        imageurl = response.css("a.download-button::attr(href)").extract()[0]
+        if ".mp4" in imageurl:
+            return
         picIds = response.url.split("/")[-2]
-        for i,url in enumerate(imageurl):
-            if i > 0:
-                picIds = response.url.split("/")[-2] +"_"+ str(i)
-            imageName = "%s(%s)" % (profileId, picIds)
-            if ".mp4" in url:
-                continue
-                self.downloadThisWithIDM(url, imageName + ".mp4", self.videoPath)
-            else:
-                self.downloadThisWithIDM(url, imageName + ".jpg", self.path)
-            completedPicIds = picIds + "\n" + completedPicIds
+        profileId = response.meta['pid']
+        imageName = "%s(%s)" % (profileId, picIds)
+        completedPicIds = self.getCompletedId(profileId)
+        self.downloadThisWithIDM(imageurl, imageName + ".jpg", self.path)
+        completedPicIds = picIds + "\n" + completedPicIds
         self.setCompletedId(profileId, completedPicIds)
 
 
     def profileStalker(self, response):
         print("profile Stalking is starting")
-        posts = response.css("a[href*=\/post\/]::attr(href)").extract()
+        posts = response.css("a[href*=post]::attr(href)").extract()
         profileId = response.url.split("/")[-1]
         completedPicIds = self.getCompletedId(profileId)
         for post in posts:

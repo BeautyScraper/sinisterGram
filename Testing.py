@@ -21,10 +21,10 @@ class sinSpider(scrapy.Spider):
     def __init__(self):
         self.path = "D:\\paradise\\stuff\\sinisterBabes"
         self.videoPath2 = "D:\\paradise\\stuff\\sinisterVideos"
-        self.videoPath = "D:\\paradise\\stuff\\sinisterVideos"
+        self.videoPath = "D:\\paradise\\stuff\\SinToWatch"
 
     def start_requests(self):
-        with open("instaLinks.opml", "r+") as instalink:
+        with open("instaLinksT.opml", "r+") as instalink:
             # time.sleep(60)
             urls = instalink.readlines()
 
@@ -33,9 +33,9 @@ class sinSpider(scrapy.Spider):
             rl = url.split("/")[3]
             # url = "https://profile-stalker.to/profile/%s" % rl
             print("currently opening the url =" + url)
-            c = 'ig_did=F3F9A864-AC42-4DB3-AC9F-0B0AF535C5B0; csrftoken=sZ4yJrELqcMOKDTdQ46pe2DA7vVwB5bv; mid=XuueIQALAAHr9T-qkhi7-yFbHJ_A; ds_user_id=3246264185; rur=RVA; sessionid=3246264185%3AXm8BtKO1uiBGJC%3A17; shbid=4720; shbts=1613220423.417121'
+            c = 'ig_did=F3F9A864-AC42-4DB3-AC9F-0B0AF535C5B0; rur=VLL; csrftoken=0Ps1K6f9plYrCW5uGqb8BPReDuzuOXnJ; mid=XuueIQALAAHr9T-qkhi7-yFbHJ_A; urlgen="{\"113.193.175.20\": 45528}:1jlxy2:ufV0B2tJOr8-K87d--HguuWx6rk"; ds_user_id=3246264185; sessionid=3246264185%3AxuZ32tusrj4UFw%3A6; shbid=4720; shbts=1592499771.8243878'
             c = self.getScrapyCookie(c)
-            yield scrapy.Request(url.rstrip("\n"), callback=self.parse,  cookies=c, errback=self.on404, )
+            yield scrapy.Request(url.rstrip("\n"), callback=self.parse, errback=self.on404, )
             # yield scrapy.Request(url.rstrip("\n"), callback=self.profileStalker, errback=self.on404, )
 
     def getScrapyCookie(self,cookie):
@@ -179,16 +179,18 @@ class sinSpider(scrapy.Spider):
 
     def parse(self, response):
         print("Time to wait")
-        time.sleep(random.randint(0,60))
+        # time.sleep(random.randint(0,60))
         profileId = response.url.split("/")[3]
         completedPicIds = self.getCompletedId(profileId)
+        import pdb;pdb.set_trace()
         fileNames = ["%s(%s)" % (profileId, x) for x in response.css("body").re("\"shortcode\":[ ]*\"(.*?)\"")]
         # links = response.css("body").re("\"display_url\":[ ]*\"(.*?)\"")[:12]
         # links = [x.split("\\u")[0] for x in response.css("body").re("\"display_url\":[ ]*\"(.*?)\"")[:12]]
-        links =  [x.replace("\\u0026","&") for x in response.css("body").re("\"display_url\":[ ]*\"(.*?)\"")[:12]]
+        links =  [x.replace("\\u0026","&").replace("&amp;","&") for x in response.css("body").re("\"display_url\":[ ]*\"(.*?)\"")]
         picIds = response.css("body").re("\"shortcode\":[ ]*\"(.*?)\"")
         types = response.css("body").re("\"__typename\":[ ]*\"(.*?)\"")
         for i in range(len(links)):
+            print("XXXXXXX")
             try:
                 a = picIds[i]
             except Exception as e:

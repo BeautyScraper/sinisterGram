@@ -1,0 +1,1 @@
+activate && conda activate streamV && cmd /k python pixWoxCurl.py
