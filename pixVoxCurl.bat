@@ -1,0 +1,1 @@
+"C:\ProgramData\Miniconda3\Scripts\activate.bat" && conda activate "pixVox" && cmd /k python pixWoxCurl.py
